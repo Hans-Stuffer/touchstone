@@ -10,6 +10,14 @@ touchstone hands Claude Code a set of tools that do not guess. A theorem prover.
 
 The name is the old jeweller's trick. You rub gold against a dark stone and read the streak to tell real metal from fake. That is what these tools do to code.
 
+## Prove the design before you write it
+
+The move that matters most is the one good engineers make and the rest skip. When a problem carries a real invariant, you do not write the code and check it afterward. You find the structure first, prove the law on the abstract design, and then the code is a transcription you verify against the model.
+
+Take a merge. Before a line of code, you ask what it has to be: a merge that reconciles two views should be a semilattice join, which means commutative, associative, and idempotent. You encode that abstract operation in Z3 and assert the negation of each law. UNSAT proves it holds for every input; SAT hands you the exact case that breaks it. A first-wins collision rule fails commutativity, a greedy match fails associativity, an additive counter fails idempotence, and you learn all of that before it ships, when the fix is a design decision instead of a production incident. Only then do you implement, and check the code against the same laws with a property test.
+
+Catching a design flaw before code is the cheapest catch there is. Catching it in a test run is the most expensive, and most real bugs are already baked in by the time the code exists. That is why the skill leads with this, and why the design hook (below) fires the moment you ask for the work, not after you have written it.
+
 ## What gets wired in
 
 One command adds these to Claude Code:
@@ -42,9 +50,9 @@ Concrete jobs you can hand it. Each routes to the engine that gives a real answe
 
 ## A session looks like this
 
-You ask Claude to write a function and make sure it is right. Instead of writing it and saying "looks good," Claude writes a candidate, runs it through the matching engine, and reads the verdict. If Z3 or CrossHair hands back a breaking input, the fix goes in and it runs again. The loop ends when the engine has nothing left to complain about, not when the code merely compiles.
+You ask Claude to build something that has to be correct, say a merge of two carts. Before writing it, Claude names what it must be (a merge that reconciles two views is a semilattice join: commutative, associative, idempotent) and proves those laws on the abstract design in Z3. If a law fails, Z3 hands back the exact case, and the fix happens in the design, before any code. Once the laws hold, Claude writes the implementation as a transcription and checks it against the same laws with a property test.
 
-Then it tells you what it actually checked. Not "this should be fine." Something you can trust the shape of: "Z3 proved the index stays in bounds for every integer input," or "CrossHair found no counterexample in 15 seconds, which is good evidence but not a proof." You always know which kind of certainty you are holding.
+Then it tells you what it actually proved. Not "this should be fine." Something you can trust the shape of: "Z3 proved the merge is commutative and associative for all states," or "CrossHair found no counterexample in 15 seconds, which is good evidence but not a proof." You always know which kind of certainty you are holding.
 
 ## Why this exists
 
@@ -52,7 +60,7 @@ Here is the one thing language models cannot do reliably. Be sure. They pattern 
 
 Bolt them together and the model does what it is good at while the solver does what it is good at. You stop shipping the bug that only shows up on the empty list.
 
-The move that matters most is generate then verify. Claude writes a candidate. The solver tries to prove it or break it. If it breaks, the counterexample goes back and Claude tries again. You loop until the code is correct, not until it compiles and looks right. Looks-right is where the bugs live.
+The strongest version of this is design-first: prove the law on the model before the code exists, as above. The everyday version is generate then verify: Claude writes a candidate, the solver tries to break it, and the counterexample goes back until it holds. Either way the engine, not the model's confidence, is the source of truth. You loop until the design holds and the code matches it, not until the code compiles and looks right. Looks-right is where the bugs live.
 
 ## Install
 
@@ -83,10 +91,11 @@ Want the routing always-on instead of skill-triggered? Drop the contents of `ski
 
 ## Beyond the skill
 
-Two pieces that turn the discipline from advice into something enforced and repeatable:
+Three pieces that turn the discipline from advice into something that fires:
 
-- **`hooks/touchstone-gate.mjs`**: an opt-in Claude Code hook that makes the agent verify when it edits invariant-bearing code, instead of just being told to. It fires only on the seam where the engines earn their keep, and stays quiet everywhere else.
-- **`loop/verify-gated.sh`**: generate, verify, repair on the counterexample, repeat until clean. The "generate then verify" loop made mechanical, driven by the `claude` CLI.
+- **`hooks/touchstone-design-gate.mjs`**: the one that matters. A hook that fires the moment you ask for seam work, before any code, and tells the agent to model and prove the design first. The cheapest place to catch a design flaw is before it is written.
+- **`hooks/touchstone-gate.mjs`**: the after-edit backstop, for when the design-time nudge was missed. Both hooks are conservative and seam-only; see [hooks/README.md](hooks/README.md).
+- **`loop/verify-gated.sh`**: generate, verify, repair on the counterexample, repeat until clean, driven by the `claude` CLI.
 
 For an honest account of where this helps on real code, and where it does not, see [docs/MODELING.md](docs/MODELING.md).
 
