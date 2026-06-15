@@ -1,0 +1,23 @@
+{
+  "_comment": "Reference config for PROJECT-scoped install. The install.sh script wires these to your USER scope automatically (claude mcp add -s user), so you only need this file if you want the toolkit available in one project rather than globally. Drop it in your project root as .mcp.json and replace /home/USER with your home directory.",
+
+  "mcpServers": {
+    "chiasmus": {
+      "command": "chiasmus",
+      "args": []
+    },
+    "semgrep": {
+      "command": "semgrep",
+      "args": ["mcp"]
+    },
+    "sympy": {
+      "command": "uv",
+      "args": ["run", "--with", "mcp[cli]", "--with", "sympy", "--with", "pydantic",
+               "mcp", "run", "/home/USER/.rigor/servers/sympy-mcp/server.py"]
+    },
+    "mcp-solver": {
+      "command": "uv",
+      "args": ["--directory", "/home/USER/.rigor/servers/mcp-solver", "run", "mcp-solver-mzn"]
+    }
+  }
+}

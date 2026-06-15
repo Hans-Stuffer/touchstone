@@ -1,0 +1,6 @@
+# rigor keeps no build artifacts in the repo. Cloned servers live in ~/.rigor.
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.venv/
