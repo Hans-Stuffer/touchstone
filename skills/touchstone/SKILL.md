@@ -44,7 +44,7 @@ Match the sub-problem, pick the tool:
 | do algebra, calculus, simplification, exact arithmetic | the `sympy` tools (`solve_algebraically`, `integrate_expression`, `simplify_expression`, ...) | you fumble symbolic math and floating point. SymPy does not |
 | reason over relations, reachability, conflicting rules | `chiasmus_solve` (Prolog) | transitive closure and logic done correctly |
 | schedule, allocate, pack, assign, optimize | `mcp-solver` (`add_item` then `solve_model`) | the optimum under constraints, not a greedy guess |
-| find the input that breaks a Python function | `crosshair check` (CLI) | symbolic execution walks every path and hands you the break |
+| find the input that breaks a Python function | `crosshair check` (CLI) | symbolic execution searches its paths within a time budget and hands you the break |
 | confirm two functions agree everywhere | `crosshair diffbehavior` (CLI) | a disagreeing input, or silence |
 | check types, lint, catch bug classes | `pyright`, `ruff` (CLI) | cheap and fast. run it every time |
 | catch injection, taint, security smells | `semgrep_scan` | thousands of deterministic rules |

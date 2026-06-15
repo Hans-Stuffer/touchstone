@@ -24,13 +24,23 @@ def clamp(x: int, lo: int, hi: int) -> int:
     return max(lo, min(x, hi))
 ```
 
-Tests pass. Ship it? Run CrossHair first:
+CrossHair only checks contracts and asserts, so a bare function gives it nothing to find. State the law you assumed as a wrapper: the leading asserts are the preconditions, and the trailing assert is the property.
 
-```bash
-uvx --from crosshair-tool crosshair check mymod.py --per_condition_timeout 15
+```python
+def check_clamp(x: int, lo: int, hi: int) -> None:
+    assert -1000 <= x <= 1000      # preconditions: a sane range
+    assert -1000 <= lo <= 1000
+    assert -1000 <= hi <= 1000
+    result = clamp(x, lo, hi)
+    assert lo <= result <= hi      # the law: the answer stays within bounds
 ```
 
-It walks the paths and reports the case you never wrote a test for: when `lo > hi`, the function silently returns `lo`, which is above the supposed maximum. Whether that is a bug depends on your intent, but now the decision is yours to make on purpose instead of by accident.
+```bash
+uvx --from crosshair-tool crosshair check clamp.py --analysis_kind asserts --per_condition_timeout 12
+=> AssertionError when calling check_clamp(0, 1, 0)
+```
+
+There it is: with `lo > hi` (here lo=1, hi=0) the function returns `lo`, which sits above the supposed maximum. Whether that is a bug depends on your intent, but now the decision is yours to make on purpose. The lesson is in the setup: you have to write the invariant down before a tool can break it.
 
 ## 3. Stop hand-rolling the optimizer
 

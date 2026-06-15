@@ -121,9 +121,11 @@ if [ "$MINIMAL" = 0 ]; then
 
   if [ -x "$HOME/.local/bin/minizinc" ] || have minizinc; then
     wire mcp-solver uv --directory "$SERVERS/mcp-solver" run mcp-solver-mzn
+    SOLVER_BACKEND="MiniZinc CP (Gecode + Chuffed)"
   else
     warn "no minizinc found; wiring mcp-solver in ASP mode (no native dependency)"
     wire mcp-solver uv --directory "$SERVERS/mcp-solver" run mcp-solver-asp
+    SOLVER_BACKEND="ASP fallback. MiniZinc CP was NOT installed, so constraint/optimization is limited"
   fi
 fi
 
@@ -135,6 +137,8 @@ cp -r "$SKILL_SRC" "$SKILL_DST" && ok "installed skill to ${SKILL_DST/#$HOME/~}"
 say "done"
 echo "Servers now in your user config (restart Claude Code to load them):"
 claude mcp list 2>/dev/null | grep -vE '^Checking' || true
+echo
+echo "Constraint solver backend wired: ${SOLVER_BACKEND:-(mcp-solver not installed)}"
 echo
 echo "Restart Claude Code, then type /touchstone to see the routing brain."
 if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then

@@ -3,8 +3,8 @@ from typing import List
 
 def apply_discounts(price_cents: int, percents: List[int]) -> int:
     """Stack percent-off coupons. Looks fine, ships to prod. The bug: stacking
-    is additive and uncapped, so two perfectly valid coupons (60% and 60%) sum
-    to 120% off and the customer gets paid to place the order."""
+    is additive and uncapped. Two valid 100%-off coupons on a 101 cent item
+    return -101, so the customer gets paid to place the order."""
     total_pct = sum(percents)
     return price_cents - price_cents * total_pct // 100
 

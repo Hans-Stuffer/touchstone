@@ -38,7 +38,7 @@ crosshair check pricing.py --analysis_kind asserts
 => AssertionError when calling check_never_negative(101, [100, 100])
 ```
 
-Two perfectly valid 100 percent coupons, a 101 cent item, and the function returns -101. You pay the customer. The fix caps the combined discount at 100 percent, and CrossHair finds no violation on the fixed version, which is strong evidence and not a proof. Real Python, a real bug, found by walking every path instead of hoping a test happened to cover it. The runnable version is in [../examples/discount-stacking.py](../examples/discount-stacking.py).
+Two perfectly valid 100 percent coupons, a 101 cent item, and the function returns -101. You pay the customer. The fix caps the combined discount at 100 percent, and CrossHair finds no violation on the fixed version, which is strong evidence and not a proof. Real Python, a real bug, found by searching the function's paths instead of hoping a test happened to cover it. The runnable version is in [../examples/discount-stacking.py](../examples/discount-stacking.py).
 
 ## The loop, restated for code
 

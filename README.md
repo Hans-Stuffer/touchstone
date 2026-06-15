@@ -6,7 +6,7 @@
 
 Your AI coding assistant is confidently wrong sometimes. It swears the function is correct. It is not. It does arithmetic in its head and drops a carry. It waves at a proof and moves on.
 
-touchstone hands Claude Code a set of tools that do not guess. A theorem prover. A symbolic math engine. A constraint solver. A thing that walks every path through your function hunting for the input that breaks it. When a problem has an exact answer, Claude stops improvising and asks the engine that knows.
+touchstone hands Claude Code a set of tools that do not guess. A theorem prover. A symbolic math engine. A constraint solver. A tool that explores your function's paths to find the input that breaks it. When a problem has an exact answer, Claude stops improvising and asks the engine that knows.
 
 The name is the old jeweller's trick. You rub gold against a dark stone and read the streak to tell real metal from fake. That is what these tools do to code.
 
@@ -32,7 +32,7 @@ Concrete jobs you can hand it. Each routes to the engine that gives a real answe
 
 **Solve the optimization you were about to hand-roll.** Scheduling, packing, assignment, routing. Describe the constraints and what to maximize, and MiniZinc returns the genuine optimum and tells you it is optimal. No more greedy loop that looks clever and is wrong on the case nobody tested.
 
-**Hunt the edge case nobody wrote a test for.** CrossHair walks every path through a Python function looking for input that violates its types, asserts, or contracts. Point it at a tidy looking `clamp(x, lo, hi)` and it finds that the thing silently returns `lo` when `lo > hi`. Now you get to decide whether that is a bug on purpose instead of by accident.
+**Hunt the edge case nobody wrote a test for.** CrossHair explores a Python function's paths within a time budget, looking for input that violates its types, asserts, or contracts. Point it at a tidy looking `clamp(x, lo, hi)` and it finds that the thing silently returns `lo` when `lo > hi`. Now you get to decide whether that is a bug on purpose instead of by accident.
 
 **Read your codebase as a graph.** Who calls this. What is unreachable. Where tainted input actually flows. A real call graph from tree-sitter, not grep and a hunch.
 
@@ -79,13 +79,13 @@ The installer is idempotent. Run it again any time to update the servers, and `.
 
 The installer drops a skill into Claude Code. That skill is a routing table. It tells the model which engine fits which problem, and it drills in one rule the model must not forget: the solver proves your encoding, not your intention. Translate the problem wrong and you get a rigorous answer to the wrong question. So the skill makes Claude state, in plain words, what it actually proved on every pass.
 
-Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md) and three worked before-and-after examples in [examples/](examples/README.md).
+Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md), worked before-and-after examples in [examples/](examples/README.md), a real-coding map in [docs/MODELING.md](docs/MODELING.md), and the literature behind the approach (with verified citations) in [docs/BACKGROUND.md](docs/BACKGROUND.md).
 
 ## What it is not
 
 It is not magic and it is not for everything. Most code is glue. None of that has a clean mathematical spec, so a prover has nothing to bite on. touchstone earns its keep on the slice that does have a spec: algorithms, math, invariants, equivalence checks, constraints, optimization. Use it there. Use tests and a review for the rest.
 
-And read the guarantees honestly. CrossHair finding no counterexample is not a proof, it just ran out of time looking. Z3 returning UNSAT over the integers is a proof. Those are very different claims and the skill keeps Claude from blurring them.
+And read the guarantees honestly. CrossHair finding no counterexample is not a proof, it just ran out of time looking. Z3 returning UNSAT over the integers is a proof, but Z3 can also answer "unknown" on a hard fragment, which settles nothing. Those are different claims and the skill keeps Claude from blurring them.
 
 ## Uninstall
 

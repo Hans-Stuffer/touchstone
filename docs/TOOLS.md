@@ -4,14 +4,14 @@ What each engine is, what it actually guarantees, and when to call it.
 
 ## Chiasmus (MCP server)
 
-Three engines behind one server. Installed globally over npm (`chiasmus`), runs Z3 and SWI-Prolog as bundled WASM so there is no native solver to compile.
+Three engines behind one server. Installed globally over npm (`chiasmus`). It bundles Z3 and SWI-Prolog (as WASM in current versions), so there is usually no native solver to compile; the [Chiasmus project](https://github.com/yogthos/chiasmus) is the source of truth for its packaging.
 
 - `chiasmus_verify`: submit SMT-LIB to Z3 (or a Prolog goal) and get a verified result back, with unsat cores or derivation traces. This is your prover. To prove a property, assert its negation and check for UNSAT. UNSAT means no counterexample exists. SAT hands you the counterexample.
 - `chiasmus_solve`: solve a constraint system or run a Prolog query.
 - `chiasmus_graph`: tree-sitter call graph: callers, callees, reachability, cycles, dead code, taint and impact analysis. Real structure, not a text search.
 - `chiasmus_map`, `chiasmus_formalize`, `chiasmus_craft`: codebase outline, pick a verification template, build reusable templates.
 
-Guarantee: a Z3 UNSAT result is a genuine proof over the declared theory (ints, reals, bitvectors, arrays). Watch the theory you chose. A proof over reals is not a proof over floats.
+Guarantee: a Z3 UNSAT result is a genuine proof over the declared theory (ints, reals, bitvectors, arrays). Watch the theory you chose. A proof over reals is not a proof over floats. And Z3 is not always decisive: on undecidable or hard fragments (nonlinear integer arithmetic, unbounded quantifiers) it can answer `unknown`, which is neither proof nor disproof, the same non-answer as CrossHair finding nothing.
 
 ## SymPy (MCP server: sympy)
 
@@ -23,11 +23,11 @@ Security note: SymPy parses expressions with eval underneath. Feed it expression
 
 ## mcp-solver with MiniZinc (MCP server: mcp-solver)
 
-A stateful model-building interface (`add_item`, `replace_item`, `delete_item`, `get_model`, `solve_model`) over MiniZinc, with Gecode and Chuffed as the constraint solvers. Backed by a SAT 2025 paper.
+A stateful model-building interface (`add_item`, `replace_item`, `delete_item`, `get_model`, `solve_model`) over MiniZinc, with Gecode and Chuffed as the constraint solvers. Backed by a peer-reviewed paper (Szeider, SAT 2025, *Bridging Language Models and Symbolic Solvers via the Model Context Protocol*; [arXiv:2501.00539](https://arxiv.org/abs/2501.00539)).
 
 Use it for constraint satisfaction and optimization: scheduling, packing, assignment, routing, resource allocation. The installer wires the MiniZinc backend by default. mcp-solver also ships SAT, MaxSAT, SMT, and ASP backends if you want them.
 
-Guarantee: an OPTIMAL result is a true optimum for the model you wrote. INFEASIBLE means no solution exists under your constraints. As always, it is your model that gets solved, so read it back.
+Guarantee: an OPTIMAL result is a true optimum for the model you wrote. INFEASIBLE means no solution exists under your constraints. UNKNOWN means it ran out of time without deciding, which settles nothing. As always, it is your model that gets solved, so read it back.
 
 ## Semgrep (MCP server: semgrep)
 
@@ -39,7 +39,7 @@ This is pattern and dataflow analysis, not type inference. Pair it with pyright 
 
 `uvx --from crosshair-tool crosshair check <target>` symbolically executes a Python function looking for inputs that violate its type annotations, contracts, or asserts. `crosshair diffbehavior f g` finds an input where two functions disagree. `crosshair cover` generates path-covering examples.
 
-Guarantee: a reported counterexample is real, reproduce it. No counterexample is NOT a proof. It means CrossHair did not find a break within the timeout. Always pass `--per_condition_timeout` and target specific functions, it is slow per function.
+Guarantee: a reported counterexample is real, reproduce it. No counterexample is NOT a proof. It explores paths within a time budget, not exhaustively, so absence of a break means it did not find one in the time you gave it. Always pass `--per_condition_timeout` and target specific functions, it is slow per function.
 
 ## pyright and ruff (CLI)
 
