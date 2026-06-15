@@ -45,10 +45,13 @@ Match the sub-problem, pick the tool:
 | reason over relations, reachability, conflicting rules | `chiasmus_solve` (Prolog) | transitive closure and logic done correctly |
 | schedule, allocate, pack, assign, optimize | `mcp-solver` (`add_item` then `solve_model`) | the optimum under constraints, not a greedy guess |
 | find the input that breaks a Python function | `crosshair check` (CLI) | symbolic execution searches its paths within a time budget and hands you the break |
-| confirm two functions agree everywhere | `crosshair diffbehavior` (CLI) | a disagreeing input, or silence |
-| check types, lint, catch bug classes | `pyright`, `ruff` (CLI) | cheap and fast. run it every time |
+| break a JavaScript or TypeScript function | `fast-check` property (CLI) | random plus shrinking search for the minimal falsifying input |
+| confirm two functions agree everywhere | `crosshair diffbehavior` (Python), `fast-check` or a Z3 equivalence (TS) | a disagreeing input, or silence |
+| check types, lint, catch bug classes | `pyright`/`ruff` (Python), `tsc`/`eslint` (TS) | cheap and fast. run it every time |
 | catch injection, taint, security smells | `semgrep_scan` | thousands of deterministic rules |
 | understand call structure, dead code, blast radius | `chiasmus_graph` | a real graph, not grep and hope |
+
+Z3, SymPy, and MiniZinc are language-neutral; they work on the math, not the source language. CrossHair and Hypothesis are Python. fast-check, tsc, and eslint cover JavaScript and TypeScript.
 
 > SymPy is stateful. Declare each variable with `intro` (and its assumptions, like `real`) **before** you introduce an expression that uses it, then solve. Skip that and `solve_algebraically` silently returns the empty set, because the expression's symbol is a different object from the one you solved for.
 
@@ -83,6 +86,11 @@ uvx --from crosshair-tool crosshair diffbehavior mypkg.mod.f mypkg.mod.g
 
 # types and lint
 pyright --outputjson path/        ;  ruff check --output-format=json path/
+
+# JavaScript / TypeScript: property-test with fast-check, types with tsc, lint with eslint
+# (installed under ~/.touchstone/js; in a project use `npm i -D fast-check` and run with tsx)
+npx tsx prop.ts                                          # run a fast-check property
+~/.touchstone/js/node_modules/.bin/tsc --noEmit file.ts  # type check
 
 # security (prefer the semgrep_scan MCP tool; this is the CLI fallback)
 semgrep scan --config auto path/

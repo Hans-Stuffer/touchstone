@@ -81,6 +81,15 @@ The installer drops a skill into Claude Code. That skill is a routing table. It 
 
 Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md), worked before-and-after examples in [examples/](examples/README.md), a real-coding map in [docs/MODELING.md](docs/MODELING.md), and the literature behind the approach (with verified citations) in [docs/BACKGROUND.md](docs/BACKGROUND.md).
 
+## Beyond the skill
+
+Two pieces that turn the discipline from advice into something enforced and repeatable:
+
+- **`hooks/touchstone-gate.mjs`**: an opt-in Claude Code hook that makes the agent verify when it edits invariant-bearing code, instead of just being told to. It fires only on the seam where the engines earn their keep, and stays quiet everywhere else.
+- **`loop/verify-gated.sh`**: generate, verify, repair on the counterexample, repeat until clean. The "generate then verify" loop made mechanical, driven by the `claude` CLI.
+
+For an honest account of where this helps on real code, and where it does not, see [docs/MODELING.md](docs/MODELING.md).
+
 ## What it is not
 
 It is not magic and it is not for everything. Most code is glue. None of that has a clean mathematical spec, so a prover has nothing to bite on. touchstone earns its keep on the slice that does have a spec: algorithms, math, invariants, equivalence checks, constraints, optimization. Use it there. Use tests and a review for the rest.

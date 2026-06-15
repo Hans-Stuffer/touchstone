@@ -46,3 +46,11 @@ Two perfectly valid 100 percent coupons, a 101 cent item, and the function retur
 2. Pick the engine. "Find me a breaking input" is CrossHair or Hypothesis on the real function. "Prove it for every input" is Z3. "No security hole" is Semgrep.
 3. Run it on the code. Fix what it finds. Then say what you actually checked and what that check does and does not guarantee.
 4. If the code is glue with no invariant, skip all of this. Forcing it wastes time and manufactures false confidence.
+
+## What a real bug history showed
+
+We pointed this at a real production codebase's history of shipped-and-fixed bugs and asked a blunt question of each: would model-then-verify have caught it first, if someone had modeled the invariant? The answer was humbling and useful. The exact engines cleanly pre-empt only a small minority of real bugs, the high single digits in the sample we looked at, with an optimistic ceiling near half if every catchable invariant had actually been modeled. The catches and near-catches clustered in a narrow, nameable seam: merge and convergence, idempotency, decode and round-trip contracts, bounds and pricing, state-machine legality.
+
+The large majority of real fixes lived elsewhere entirely: configuration and ops, startup sequencing, access provisioning, schema migrations, responsive UI, third-party integration and scraping robustness, and plain null-handling. No exact engine touches those, and pretending otherwise is the false-confidence trap.
+
+That is the honest case for the tool, and the reason the honesty gate matters as much as the engines. It is not a general bug catcher. It is a sharp instrument for the slice that carries a checkable invariant, and on a real codebase that slice is small. Aim it at the merge engine, the money math, the state machine, the serializer. Everywhere else, reach for tests and a reviewer.

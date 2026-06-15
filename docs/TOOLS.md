@@ -35,6 +35,17 @@ Guarantee: an OPTIMAL result is a true optimum for the model you wrote. INFEASIB
 
 This is pattern and dataflow analysis, not type inference. Pair it with pyright for types.
 
+## JavaScript and TypeScript (fast-check, tsc, eslint)
+
+The Python engines have JS/TS counterparts, and the language-neutral engines (Z3, SymPy, MiniZinc, via SMT-LIB and exact models) work regardless of source language.
+
+- **fast-check** is property-based testing for JS/TS, the QuickCheck of the ecosystem. State a law as `fc.assert(fc.property(...))` and it searches random inputs, then shrinks any failure to a minimal counterexample. This is the JS/TS answer to "find the input that breaks it." Installed under `~/.touchstone/js`; in a project, `npm i -D fast-check` and run with `tsx` or your test runner.
+- **tsc** (`tsc --noEmit`) is the type checker: the cheapest invariant enforcement there is, and the JS/TS form of "make illegal states unrepresentable."
+- **eslint** catches bug classes and smells, the analog of ruff.
+- **Z3** still applies. An equivalence check or a universal property proved in SMT-LIB is about the math, not the language, so a TypeScript refactor can be proved equivalent the same way a Python one can.
+
+Run a property: `npx tsx prop.ts`. Type check: `tsc --noEmit file.ts`. See `examples/cart-merge.ts` for a fast-check property that catches an order-dependent merge.
+
 ## CrossHair (CLI)
 
 `uvx --from crosshair-tool crosshair check <target>` symbolically executes a Python function looking for inputs that violate its type annotations, contracts, or asserts. `crosshair diffbehavior f g` finds an input where two functions disagree. `crosshair cover` generates path-covering examples.

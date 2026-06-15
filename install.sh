@@ -80,6 +80,19 @@ uv tool install crosshair-tool >/dev/null 2>&1 && ok "crosshair" || warn "crossh
 uv tool install ruff           >/dev/null 2>&1 && ok "ruff"      || warn "ruff install failed"
 uv tool install pyright        >/dev/null 2>&1 && ok "pyright"   || warn "pyright install failed"
 
+say "JavaScript / TypeScript toolchain (fast-check, typescript, eslint, tsx)"
+if have npm; then
+  mkdir -p "$TS_HOME/js"
+  [ -f "$TS_HOME/js/package.json" ] || printf '{ "name": "touchstone-js", "private": true, "version": "0.0.0" }\n' > "$TS_HOME/js/package.json"
+  if npm --prefix "$TS_HOME/js" install --no-fund --no-audit fast-check typescript eslint tsx >/dev/null 2>&1; then
+    ok "fast-check + typescript + eslint + tsx in $TS_HOME/js"
+  else
+    warn "JS/TS toolchain install failed (only needed for TS/JS verification)"
+  fi
+else
+  warn "skipping JS/TS toolchain (needs npm)"
+fi
+
 if [ "$MINIMAL" = 0 ]; then
   say "Semgrep (SAST)"
   uv tool install semgrep >/dev/null 2>&1 && ok "installed semgrep" || warn "semgrep install failed"
