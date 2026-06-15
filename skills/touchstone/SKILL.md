@@ -1,6 +1,6 @@
 ---
 name: touchstone
-description: Neurosymbolic verification toolkit. Use when correctness actually matters: proving a property or invariant, checking that two implementations are equivalent, exact math (algebra, calculus, number theory), solving a constraint or optimization problem, hunting counterexamples and edge cases, or running a security / bug-class pass. Routes the sub-problem to an exact engine (Z3, SymPy, MiniZinc, Prolog, CrossHair, Semgrep) instead of guessing.
+description: Neurosymbolic modeling-and-verification toolkit. FIRST find the structure in a problem (the algebra: monoid, semilattice/CRDT, lattice, equivalence relation, constraint system, state machine), THEN verify it with an exact engine. Use when correctness matters: modeling a gnarly domain problem, proving a property or invariant, checking two implementations are equivalent, exact math, solving a constraint or optimization problem, hunting counterexamples, or a security pass. Routes to an exact engine (Z3, SymPy, MiniZinc, Prolog, CrossHair, Semgrep) instead of guessing.
 trigger: /touchstone
 ---
 
@@ -8,7 +8,30 @@ trigger: /touchstone
 
 You write good code and you are bad at being sure it is correct. These tools close that gap. The division of labor is simple: you translate and generate, the engines prove and solve. When a sub-problem has an exact answer, hand it to the thing that computes exact answers instead of reasoning it out in your head.
 
-The engines are wired into this Claude Code as MCP servers (`chiasmus_*`, `sympy` tools, `semgrep_*`, `mcp-solver` model tools) plus three command-line tools (`crosshair`, `pyright`, `ruff`). They are always available. Your job is knowing when to reach for them.
+The engines are wired into this Claude Code as MCP servers (`chiasmus_*`, `sympy` tools, `semgrep_*`, `mcp-solver` model tools) plus three command-line tools (`crosshair`, `pyright`, `ruff`). They are always available. Your job is two things: find the structure first, then pick the engine that proves it.
+
+## Model before you reach for a tool
+
+Before writing code for a non-trivial domain problem, find the structure. Most messes are one of a few shapes wearing a costume. Spend thirty seconds matching the problem to a structure, because the structure tells you which laws to prove.
+
+| If the problem is about | It probably wants to be a | Which hands you |
+|---|---|---|
+| combining, merging, reconciling, syncing views | semilattice / CRDT | order independence: commutative, associative, idempotent |
+| accumulating, folding, reducing a sequence | monoid | an identity element, and safe partial or parallel reduction |
+| precedence, overrides, "most specific wins" | lattice / partial order | a defined winner for every conflict |
+| dedup, "are these the same thing", canonicalize | equivalence relation + normal form | one representative per class |
+| rules plus a thing to maximize | constraint / optimization model | the real optimum, not a greedy guess |
+| lifecycles, legal vs illegal transitions | state machine | impossible states you cannot even represent |
+
+The move, in six steps:
+1. Name the core operation or relation in one sentence.
+2. Ask what laws it should obey: identity, commutative, associative, idempotent, monotonic, total or partial.
+3. Match it to a structure above and name it out loud.
+4. Write the canonical form and the invariants down, in words, before any code.
+5. Implement against that, then prove the laws hold with the engines below. Z3 for "for all inputs", Hypothesis or CrossHair for "I tried hard and could not break it".
+6. Honesty gate: if nothing clean fits, say so and stop modelling. Forcing an abstraction onto genuinely messy logic is the false-confidence trap one level up.
+
+The goal is not to mathematise everything. It is to notice when a sprawl of special cases is secretly one law, collapse it to that law, and prove the collapse was valid. A junior writes the forty cases. You find the one law that makes thirty-nine of them vanish, and you prove it holds.
 
 ## When to reach for which engine
 
