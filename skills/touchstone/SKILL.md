@@ -48,6 +48,13 @@ For a state machine, model the transition relation, assert that a bad state is r
 
 If a law failed, change the operation and re-prove until it holds. A deterministic value-merge instead of first-wins. Union-find over the symmetric relation instead of greedy matching. Key or set the counter instead of adding. Only once the design holds do you write the code, as a transcription of the proven design. Then verify the implementation against the same laws with a property test: Hypothesis for Python, fast-check for JavaScript or TypeScript, or CrossHair to hunt a breaking input. That last step is the safety net, not the main event.
 
+## Past one function: explore the design, and remember it
+
+Two moves for a design bigger than a single function. Keep them light, and reach for them only when the choice is real and expensive to reverse.
+
+- Do not commit to the first design. When the choice is non-obvious, sketch two or three genuinely different options, have Codex red-team each for failure modes and scaling cliffs, weigh the tradeoffs, and pick on purpose. Playbook in `docs/DESIGN-REVIEW.md`.
+- Hold the system, do not re-derive it. Before a non-trivial change, consult the architecture and the decisions already made rather than pattern-matching locally, then record the decision and its reason after. How in `docs/SYSTEM-MODEL.md`.
+
 ## The engines behind the steps
 
 When you need a specific check, this is the toolbox. They are wired into this Claude Code as MCP servers (`chiasmus_*`, `sympy` tools, `semgrep_*`, `mcp-solver`) plus the command-line tools (`crosshair`, `pyright`, `ruff`, `fast-check`, `tsc`, `eslint`).

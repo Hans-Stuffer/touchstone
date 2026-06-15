@@ -87,7 +87,7 @@ The installer is idempotent. Run it again any time to update the servers, and `.
 
 The installer drops a skill into Claude Code. That skill is a routing table. It tells the model which engine fits which problem, and it drills in one rule the model must not forget: the solver proves your encoding, not your intention. Translate the problem wrong and you get a rigorous answer to the wrong question. So the skill makes Claude state, in plain words, what it actually proved on every pass.
 
-Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md), worked before-and-after examples in [examples/](examples/README.md), a real-coding map in [docs/MODELING.md](docs/MODELING.md), and the literature behind the approach (with verified citations) in [docs/BACKGROUND.md](docs/BACKGROUND.md).
+Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md), worked before-and-after examples in [examples/](examples/README.md), a real-coding map in [docs/MODELING.md](docs/MODELING.md), the literature behind the approach in [docs/BACKGROUND.md](docs/BACKGROUND.md), a design-review playbook in [docs/DESIGN-REVIEW.md](docs/DESIGN-REVIEW.md), and how to hold the architecture across sessions in [docs/SYSTEM-MODEL.md](docs/SYSTEM-MODEL.md).
 
 ## Beyond the skill
 
