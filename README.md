@@ -33,7 +33,7 @@ The move that matters most is generate then verify. Claude writes a candidate. T
 You need Node, Python 3.11 or newer, git, curl, and [uv](https://docs.astral.sh/uv). Then:
 
 ```bash
-git clone https://github.com/YOUR_GITHUB/touchstone
+git clone https://github.com/Hans-Stuffer/touchstone
 cd touchstone
 ./install.sh
 ```
