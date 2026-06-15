@@ -1,46 +1,61 @@
 ---
 name: touchstone
-description: Neurosymbolic modeling-and-verification toolkit. FIRST find the structure in a problem (the algebra: monoid, semilattice/CRDT, lattice, equivalence relation, constraint system, state machine), THEN verify it with an exact engine. Use when correctness matters: modeling a gnarly domain problem, proving a property or invariant, checking two implementations are equivalent, exact math, solving a constraint or optimization problem, hunting counterexamples, or a security pass. Routes to an exact engine (Z3, SymPy, MiniZinc, Prolog, CrossHair, Semgrep) instead of guessing.
+description: Prove the design before you write the code. When a problem carries a real invariant (a merge or sync, money or pricing, a state machine, idempotency, serialization, authorization, an algorithm, an equivalence, a constraint problem), FIRST model the operation and prove its laws on the abstract design with an exact engine, THEN implement and verify the code matches. Routes to Z3, SymPy, MiniZinc, Prolog, CrossHair, fast-check, Semgrep. Use at design time on the invariant-bearing seam, not as an afterthought.
 trigger: /touchstone
 ---
 
-# touchstone: stop guessing, start proving
+# touchstone: prove the design before you write it
 
-You write good code and you are bad at being sure it is correct. These tools close that gap. The division of labor is simple: you translate and generate, the engines prove and solve. When a sub-problem has an exact answer, hand it to the thing that computes exact answers instead of reasoning it out in your head.
+The move this skill enforces is the one good engineers make and the rest skip. When a problem carries a real invariant, you do not write the code and check it afterward. You find the structure first, prove the law on the abstract design, and then the code is a transcription you verify against the model. Catching a design flaw before code is the cheapest catch there is. Catching it in a test run is the most expensive, and most real bugs are already baked in by the time code exists.
 
-The engines are wired into this Claude Code as MCP servers (`chiasmus_*`, `sympy` tools, `semgrep_*`, `mcp-solver` model tools) plus three command-line tools (`crosshair`, `pyright`, `ruff`). They are always available. Your job is two things: find the structure first, then pick the engine that proves it.
+This applies to the invariant-bearing seam, and only there: merges and sync, money and pricing, state machines, idempotency, serialization, authorization, algorithms, equivalence, constraints. Most code is glue with no invariant. For that, skip all of this and use tests and a reviewer.
 
-## Model before you reach for a tool
+## Step 1: find the algebra, before any code
 
-Before writing code for a non-trivial domain problem, find the structure. Most messes are one of a few shapes wearing a costume. Spend thirty seconds matching the problem to a structure, because the structure tells you which laws to prove.
+Match the problem to a structure and name the laws it must obey.
 
-| If the problem is about | It probably wants to be a | Which hands you |
+| The problem is about | It must be a | Laws to prove |
 |---|---|---|
-| combining, merging, reconciling, syncing views | semilattice / CRDT | order independence: commutative, associative, idempotent |
-| accumulating, folding, reducing a sequence | monoid | an identity element, and safe partial or parallel reduction |
-| precedence, overrides, "most specific wins" | lattice / partial order | a defined winner for every conflict |
-| dedup, "are these the same thing", canonicalize | equivalence relation + normal form | one representative per class |
-| rules plus a thing to maximize | constraint / optimization model | the real optimum, not a greedy guess |
-| lifecycles, legal vs illegal transitions | state machine | impossible states you cannot even represent |
+| merge / sync / reconcile | semilattice join | commutative, associative, idempotent, and updates monotone (then convergence is correct by construction) |
+| fold / accumulate / reduce | monoid | associative, with an identity |
+| precedence / override / "most specific wins" | lattice | a defined winner for every pair |
+| dedup / "are these the same" | equivalence relation + normal form | the normal form is idempotent: `norm(norm(x)) = norm(x)` |
+| lifecycle / status | state machine | only legal transitions, bad states unreachable |
+| schedule / allocate / optimize | constraint model | feasibility and optimality |
 
-The move, in six steps:
-1. Name the core operation or relation in one sentence.
-2. Ask what laws it should obey: identity, commutative, associative, idempotent, monotonic, total or partial.
-3. Match it to a structure above and name it out loud.
-4. Write the canonical form and the invariants down, in words, before any code.
-5. Implement against that, then prove the laws hold with the engines below. Z3 for "for all inputs", Hypothesis or CrossHair for "I tried hard and could not break it".
-6. Honesty gate: if nothing clean fits, say so and stop modelling. Forcing an abstraction onto genuinely messy logic is the false-confidence trap one level up.
+If the operation is not the structure it should be, that is the design risk and you just found it. A merge that is first-wins or last-write, a greedy or anchor-relative match, a `count += count` accumulator, a normal form that is not a fixpoint: name the problem now, before it ships.
 
-The goal is not to mathematise everything. It is to notice when a sprawl of special cases is secretly one law, collapse it to that law, and prove the collapse was valid. A junior writes the forty cases. You find the one law that makes thirty-nine of them vanish, and you prove it holds.
+## Step 2: prove the laws in Z3, on the design, not the code
 
-## When to reach for which engine
+Encode the abstract operation with `chiasmus_verify` (Z3) and assert the NEGATION of each law. UNSAT proves it holds for every input. SAT hands you the counterexample to fix before you write a line. For a merge, the obligations verbatim:
 
-Match the sub-problem, pick the tool:
+```
+; commutative
+(assert (not (= (merge a b) (merge b a))))                       ; want UNSAT
+; associative
+(assert (not (= (merge (merge a b) c) (merge a (merge b c)))))   ; want UNSAT
+; idempotent
+(assert (not (= (merge a a) a)))                                 ; want UNSAT
+; updates only add information (monotone)
+(assert (not (leq a (update a))))                                ; want UNSAT
+```
+
+Model the per-element combine. A pointwise lift of a semilattice over a key-map is still a semilattice, so proving the element combine plus union-of-keys proves the whole merge. Keep the model abstract and small. That is exactly why this is cheaper and more decisive than verifying code: the design is tiny, the code is not. Point Z3 at the usual killers: first-wins or last-write breaks commutativity, greedy or anchor-relative matching breaks associativity, `count += count` breaks idempotence, and a canonicalization that is not a fixpoint breaks every layer above it.
+
+For a state machine, model the transition relation, assert that a bad state is reachable, and want UNSAT. For a fold, prove associativity and the identity. SymPy for exact math, MiniZinc for constraints.
+
+## Step 3: fix the design, then implement, then verify the code matches
+
+If a law failed, change the operation and re-prove until it holds. A deterministic value-merge instead of first-wins. Union-find over the symmetric relation instead of greedy matching. Key or set the counter instead of adding. Only once the design holds do you write the code, as a transcription of the proven design. Then verify the implementation against the same laws with a property test: Hypothesis for Python, fast-check for JavaScript or TypeScript, or CrossHair to hunt a breaking input. That last step is the safety net, not the main event.
+
+## The engines behind the steps
+
+When you need a specific check, this is the toolbox. They are wired into this Claude Code as MCP servers (`chiasmus_*`, `sympy` tools, `semgrep_*`, `mcp-solver`) plus the command-line tools (`crosshair`, `pyright`, `ruff`, `fast-check`, `tsc`, `eslint`).
 
 | You are about to | Reach for | What it buys you |
 |---|---|---|
-| claim a function is correct, or an invariant always holds | `chiasmus_verify` (Z3 SMT) | a proof, or a concrete counterexample. not a vibe |
-| say "this refactor is equivalent to the old one" | `chiasmus_verify` (assert inputs equal and outputs differ; UNSAT means equivalent) | the exact input where they diverge, if one exists |
+| prove a property or an invariant for all inputs | `chiasmus_verify` (Z3 SMT) | a proof, or a concrete counterexample. not a vibe |
+| show a refactor is equivalent | `chiasmus_verify` (assert inputs equal and outputs differ; UNSAT means equivalent) | the exact input where they diverge, if one exists |
 | do algebra, calculus, simplification, exact arithmetic | the `sympy` tools (`solve_algebraically`, `integrate_expression`, `simplify_expression`, ...) | you fumble symbolic math and floating point. SymPy does not |
 | reason over relations, reachability, conflicting rules | `chiasmus_solve` (Prolog) | transitive closure and logic done correctly |
 | schedule, allocate, pack, assign, optimize | `mcp-solver` (`add_item` then `solve_model`) | the optimum under constraints, not a greedy guess |
@@ -54,26 +69,6 @@ Match the sub-problem, pick the tool:
 Z3, SymPy, and MiniZinc are language-neutral; they work on the math, not the source language. CrossHair and Hypothesis are Python. fast-check, tsc, and eslint cover JavaScript and TypeScript.
 
 > SymPy is stateful. Declare each variable with `intro` (and its assumptions, like `real`) **before** you introduce an expression that uses it, then solve. Skip that and `solve_algebraically` silently returns the empty set, because the expression's symbol is a different object from the one you solved for.
-
-## The two moves
-
-**Translate then solve.** Turn the fuzzy thing into the engine's language, let it compute the exact answer, read it back in plain words. This is math, constraints, and optimization.
-
-**Generate then verify.** Write the candidate. Then prove it or break it. If the engine returns a counterexample, feed that input back to yourself and fix the code. Loop until it comes back clean. This is where most of the value lives, and it is exactly the move people skip.
-
-## The rule that keeps you honest
-
-The engine proves your *encoding*, not your *intention*. Translate the problem wrong and you get a rigorous answer to the wrong question, which is worse than no answer because it looks trustworthy. So after every proof, state in one plain sentence what you actually proved, and sanity-check that it is what you meant.
-
-Know exactly what each result guarantees:
-- Z3 returning UNSAT over the integers is a real proof for all integer inputs.
-- MiniZinc returning OPTIMAL is a real optimum for the model you wrote.
-- CrossHair finding no counterexample is **not** a proof. It means it did not find a break inside the time budget you gave it. Absence of evidence.
-- Tests passing is evidence, never certainty.
-
-## Do not solver-everything
-
-Most code is glue. Buttons, routes, CRUD, async plumbing, product logic. None of it has a clean spec, so a prover has nothing to bite on, and forcing it through one is wasted effort and false confidence. Use these engines on the slice that has a spec: algorithms, math, invariants, equivalence, constraints, optimization. Everything else stays on types, lint, tests, and a second reader.
 
 ## Command-line quick reference
 
@@ -96,6 +91,16 @@ npx tsx prop.ts                                          # run a fast-check prop
 semgrep scan --config auto path/
 ```
 
+## The rule that keeps you honest
+
+The engine proves your encoding, not your intention. Translate the problem wrong and you get a rigorous answer to the wrong question, which is worse than no answer because it looks trustworthy. After every proof, state in one plain sentence what you actually proved, and check it is what you meant.
+
+Know what each result guarantees. Z3 returning UNSAT over the integers is a real proof for all integer inputs, but Z3 can also answer `unknown` on a hard fragment (nonlinear integer arithmetic, unbounded quantifiers), which settles nothing. MiniZinc OPTIMAL is a true optimum for the model you wrote. CrossHair finding no counterexample is NOT a proof; it explores paths within a time budget. Tests passing is evidence, never certainty.
+
+## Do not solver-everything
+
+Most code is glue. Buttons, routes, CRUD, async plumbing, product logic. None of it has a clean spec, so a prover has nothing to bite on, and forcing it through one is wasted effort and false confidence. On a real codebase the slice that carries a checkable invariant is small. Spend this there: the merge engine, the money math, the state machine, the serializer. Everywhere else, reach for types, lint, tests, and a second reader. If nothing clean fits, say so and stop.
+
 ## How to report it
 
-Name the engine and the guarantee. "Z3 proved the index stays in bounds for every int input." "CrossHair found n = -1 breaks it." "MiniZinc says 42 is optimal." Never launder a solver result into a soft reassurance like "this should be fine." If you did not prove it, say you did not prove it.
+Name the engine and the guarantee. "Z3 proved the merge is commutative and associative for all states." "CrossHair found n = -1 breaks it." "MiniZinc says 42 is optimal." Never launder a solver result into a soft reassurance like "this should be fine." If you did not prove it, say you did not prove it.

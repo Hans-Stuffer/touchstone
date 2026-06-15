@@ -1,40 +1,44 @@
-# The enforcement hook
+# The enforcement hooks
 
-The skill *advises* model-then-verify. An LLM will read that and then just write code anyway. This hook makes the discipline *fire*: right after Claude edits a file that sits on the invariant-bearing seam, it injects a reminder to name the invariant and verify it before moving on.
+The skill advises model-then-verify. An LLM reads that and writes code anyway. These two hooks make the discipline fire, at the two moments it matters.
 
-It is deliberately conservative. A retro-eval on a real production codebase found the exact engines only help on a narrow seam (merge and convergence, idempotency, pricing and bounds, state machines, serialization round-trips, authorization). Firing anywhere else is noise, so the hook matches only that seam, by filename, and stays silent otherwise. That keeps it honest: it nudges where touchstone earns its keep and shuts up where it does not.
+## touchstone-design-gate.mjs (UserPromptSubmit): the one that matters
 
-## Enable it (opt-in)
+Fires when you *ask* for work on the invariant-bearing seam, before any code exists. It injects a reminder to do the design-first move: name the operation and the structure it must be (a merge is a semilattice join; a fold a monoid; a lifecycle a state machine), prove those laws on the abstract design with Z3 first, then implement as a transcription. This is the high-leverage hook, because the cheapest place to catch a design flaw is before it is written, and after-the-fact verification catches only a small fraction of real bugs.
 
-Hooks run on every session, so this is not wired by the installer. Add it yourself, in `~/.claude/settings.json` (all projects) or a project `.claude/settings.json`:
+It is conservative. It fires only when the prompt shows both a build intent (implement, build, refactor, design, fix) and a seam topic (merge or sync, pricing or money, a state machine, idempotency, serialization, authorization, constraints). Everything else passes silently.
+
+## touchstone-gate.mjs (PostToolUse): the safety net
+
+Fires right after you edit a file whose name sits on the seam, reminding you to verify the invariant if you have not. This is the backstop for when the design-time nudge was missed.
+
+## Enable them (opt-in)
+
+Add to `~/.claude/settings.json` (all projects) or a project `.claude/settings.json`, replacing the path with your clone:
 
 ```json
 {
   "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command",
+                     "command": "node /ABSOLUTE/PATH/touchstone/hooks/touchstone-design-gate.mjs", "timeout": 5 } ] }
+    ],
     "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [
-          { "type": "command", "command": "node /ABSOLUTE/PATH/touchstone/hooks/touchstone-gate.mjs" }
-        ]
-      }
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [ { "type": "command",
+                     "command": "node /ABSOLUTE/PATH/touchstone/hooks/touchstone-gate.mjs", "timeout": 5 } ] }
     ]
   }
 }
 ```
 
-Replace the path with your clone location. The hook reads the tool payload on stdin, checks the edited file's name against the seam, and either injects a one-line reminder (`additionalContext`) or exits silently.
+If you already have hooks on these events, add these as *additional* entries in the arrays. Do not replace your existing ones.
 
 ## Tuning
 
-- `TOUCHSTONE_HOOK_PATTERNS`: extra `|`-separated regex fragments to add to the seam (e.g. your own high-stakes module names).
-- `TOUCHSTONE_HOOK_OFF=1`: disable without editing settings.
+- `TOUCHSTONE_HOOK_PATTERNS`: extra `|`-separated seam terms (your own high-stakes module names).
+- `TOUCHSTONE_HOOK_OFF=1`: disable both without editing settings.
 
-## Stricter variants
+## Why conservative
 
-The default is a nudge, which is usually enough. If you want a hard gate, two options:
-
-- Switch the script's output to `{"decision":"block","reason":"..."}` so the edit is held until Claude acknowledges the verification step.
-- Use a `Stop` hook instead of `PostToolUse` to gate the *end* of a turn ("you touched the seam and never ran a verifier") rather than each edit.
-
-Both are more invasive. Start with the nudge and only escalate if the discipline still gets skipped.
+A retro-analysis of a real production codebase found exact-engine verification helps on a narrow seam and nowhere else. Firing outside it is noise. Both hooks match only that seam, so they nudge where it pays and stay quiet where it does not.
