@@ -20,6 +20,32 @@ One command adds these to Claude Code:
 - **Semgrep** for security and bug-class scanning. Thousands of rules, deterministic, fast.
 - **CrossHair, pyright, and ruff** as command-line tools the agent runs directly: symbolic execution to break functions, type checking, and linting.
 
+## What it can do
+
+Concrete jobs you can hand it. Each routes to the engine that gives a real answer instead of a confident shrug.
+
+**Prove a function correct, or get the input that breaks it.** Ask whether something always holds and Z3 either proves it for every input or hands you a counterexample. Take the claim `2*x >= x` for all integers. Sounds fine. Z3 says no and gives you `x = -1`, because two times minus one is minus two, which is smaller than minus one. That is the bug you would have shipped, caught in a single call.
+
+**Check that a refactor changed nothing.** You rewrote a function to make it faster. Assert that the old and new versions disagree somewhere and let Z3 look. UNSAT means they are identical on every input. SAT means here is the exact case where you broke it.
+
+**Do the math without fumbling it.** Solving `x^2 - 1 = 0` returns `{-1, 1}` exactly, not a float that is almost right. Integrate, differentiate, simplify, expand, check an identity. SymPy does the algebra you would otherwise eyeball and get wrong at 1am.
+
+**Solve the optimization you were about to hand-roll.** Scheduling, packing, assignment, routing. Describe the constraints and what to maximize, and MiniZinc returns the genuine optimum and tells you it is optimal. No more greedy loop that looks clever and is wrong on the case nobody tested.
+
+**Hunt the edge case nobody wrote a test for.** CrossHair walks every path through a Python function looking for input that violates its types, asserts, or contracts. Point it at a tidy looking `clamp(x, lo, hi)` and it finds that the thing silently returns `lo` when `lo > hi`. Now you get to decide whether that is a bug on purpose instead of by accident.
+
+**Read your codebase as a graph.** Who calls this. What is unreachable. Where tainted input actually flows. A real call graph from tree-sitter, not grep and a hunch.
+
+**Scan for the bad patterns.** Semgrep runs thousands of rules over your code, the same way every time. Injection, unsafe deserialization, the usual security smells, each flagged with a file and a line.
+
+**Settle questions of logic and rules.** Prolog does reachability, transitive closure, and "can these two rules ever both fire" the way a search through your head cannot.
+
+## A session looks like this
+
+You ask Claude to write a function and make sure it is right. Instead of writing it and saying "looks good," Claude writes a candidate, runs it through the matching engine, and reads the verdict. If Z3 or CrossHair hands back a breaking input, the fix goes in and it runs again. The loop ends when the engine has nothing left to complain about, not when the code merely compiles.
+
+Then it tells you what it actually checked. Not "this should be fine." Something you can trust the shape of: "Z3 proved the index stays in bounds for every integer input," or "CrossHair found no counterexample in 15 seconds, which is good evidence but not a proof." You always know which kind of certainty you are holding.
+
 ## Why this exists
 
 Here is the one thing language models cannot do reliably. Be sure. They pattern match, which is wonderful for a first draft and useless when you need a guarantee. A solver is the mirror image. Hopeless at writing your app, perfect at telling you whether x squared is ever smaller than x over the integers.
@@ -47,11 +73,13 @@ Trimming options:
 ./install.sh --minimal       # just Chiasmus and the skill
 ```
 
+The installer is idempotent. Run it again any time to update the servers, and `./uninstall.sh` to back it all out.
+
 ## How Claude knows when to use it
 
 The installer drops a skill into Claude Code. That skill is a routing table. It tells the model which engine fits which problem, and it drills in one rule the model must not forget: the solver proves your encoding, not your intention. Translate the problem wrong and you get a rigorous answer to the wrong question. So the skill makes Claude state, in plain words, what it actually proved on every pass.
 
-Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`.
+Want the routing always-on instead of skill-triggered? Drop the contents of `skills/touchstone/SKILL.md` into your project `CLAUDE.md`. There is a per-tool reference in [docs/TOOLS.md](docs/TOOLS.md) and three worked before-and-after examples in [examples/](examples/README.md).
 
 ## What it is not
 
