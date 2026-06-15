@@ -7,15 +7,15 @@ What each engine is, what it actually guarantees, and when to call it.
 Three engines behind one server. Installed globally over npm (`chiasmus`), runs Z3 and SWI-Prolog as bundled WASM so there is no native solver to compile.
 
 - `chiasmus_verify`: submit SMT-LIB to Z3 (or a Prolog goal) and get a verified result back, with unsat cores or derivation traces. This is your prover. To prove a property, assert its negation and check for UNSAT. UNSAT means no counterexample exists. SAT hands you the counterexample.
-- `chiasmus_solve`: solve a constraint system.
+- `chiasmus_solve`: solve a constraint system or run a Prolog query.
 - `chiasmus_graph`: tree-sitter call graph: callers, callees, reachability, cycles, dead code, taint and impact analysis. Real structure, not a text search.
-- `chiasmus_map`, `chiasmus_formalize`, `chiasmus_craft`, and friends: codebase outline, pick a verification template, build reusable templates.
+- `chiasmus_map`, `chiasmus_formalize`, `chiasmus_craft`: codebase outline, pick a verification template, build reusable templates.
 
 Guarantee: a Z3 UNSAT result is a genuine proof over the declared theory (ints, reals, bitvectors, arrays). Watch the theory you chose. A proof over reals is not a proof over floats.
 
 ## SymPy (MCP server: sympy)
 
-About forty tools wrapping SymPy for exact computer algebra: `solve_algebraically`, `solve_linear_system`, `dsolve_ode`, `integrate_expression`, `differentiate_expression`, `simplify_expression`, matrices, vector calculus, units. Results are exact rationals, radicals, and symbolic forms.
+About forty tools wrapping SymPy for exact computer algebra: `solve_algebraically`, `solve_linear_system`, `solve_nonlinear_system`, `dsolve_ode`, `integrate_expression`, `differentiate_expression`, `simplify_expression`, `substitute_expression`, matrices, vector calculus, units. Build expressions with `introduce_expression` first, then operate on the handle. Results are exact rationals, radicals, and symbolic forms.
 
 Use it whenever you would otherwise compute math in your head or in float. To check an identity, simplify `lhs - rhs` and confirm it is zero.
 
@@ -23,7 +23,7 @@ Security note: SymPy parses expressions with eval underneath. Feed it expression
 
 ## mcp-solver with MiniZinc (MCP server: mcp-solver)
 
-A stateful model-building interface (`add_item`, `replace_item`, `solve_model`, `get_model`) over MiniZinc, with Gecode and Chuffed as the constraint solvers. Backed by a SAT 2025 paper.
+A stateful model-building interface (`add_item`, `replace_item`, `delete_item`, `get_model`, `solve_model`) over MiniZinc, with Gecode and Chuffed as the constraint solvers. Backed by a SAT 2025 paper.
 
 Use it for constraint satisfaction and optimization: scheduling, packing, assignment, routing, resource allocation. The installer wires the MiniZinc backend by default. mcp-solver also ships SAT, MaxSAT, SMT, and ASP backends if you want them.
 
@@ -31,7 +31,7 @@ Guarantee: an OPTIMAL result is a true optimum for the model you wrote. INFEASIB
 
 ## Semgrep (MCP server: semgrep)
 
-`semgrep_scan`, `security_check`, custom-rule scanning, AST queries. Thousands of rules across many languages for security and bug-class detection. Deterministic and fast. Local scanning needs no token.
+`semgrep_scan` runs the rulesets against your code, `semgrep_scan_with_custom_rule` runs a rule you write inline, `semgrep_findings` and `get_abstract_syntax_tree` let the agent inspect results and structure. Thousands of rules across many languages for security and bug-class detection. Deterministic and fast. Local scanning needs no token.
 
 This is pattern and dataflow analysis, not type inference. Pair it with pyright for types.
 

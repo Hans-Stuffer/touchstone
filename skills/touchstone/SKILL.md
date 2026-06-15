@@ -1,10 +1,10 @@
 ---
-name: rigor
+name: touchstone
 description: Neurosymbolic verification toolkit. Use when correctness actually matters: proving a property or invariant, checking that two implementations are equivalent, exact math (algebra, calculus, number theory), solving a constraint or optimization problem, hunting counterexamples and edge cases, or running a security / bug-class pass. Routes the sub-problem to an exact engine (Z3, SymPy, MiniZinc, Prolog, CrossHair, Semgrep) instead of guessing.
-trigger: /rigor
+trigger: /touchstone
 ---
 
-# rigor: stop guessing, start proving
+# touchstone: stop guessing, start proving
 
 You write good code and you are bad at being sure it is correct. These tools close that gap. The division of labor is simple: you translate and generate, the engines prove and solve. When a sub-problem has an exact answer, hand it to the thing that computes exact answers instead of reasoning it out in your head.
 
@@ -18,9 +18,9 @@ Match the sub-problem, pick the tool:
 |---|---|---|
 | claim a function is correct, or an invariant always holds | `chiasmus_verify` (Z3 SMT) | a proof, or a concrete counterexample. not a vibe |
 | say "this refactor is equivalent to the old one" | `chiasmus_verify` (assert inputs equal and outputs differ; UNSAT means equivalent) | the exact input where they diverge, if one exists |
-| do algebra, calculus, simplification, exact arithmetic | the `sympy` tools | you fumble symbolic math and floating point. SymPy does not |
-| reason over relations, reachability, conflicting rules | `chiasmus` Prolog | transitive closure and logic done correctly |
-| schedule, allocate, pack, assign, optimize | `mcp-solver` (MiniZinc) | the optimum under constraints, not a greedy guess |
+| do algebra, calculus, simplification, exact arithmetic | the `sympy` tools (`solve_algebraically`, `integrate_expression`, `simplify_expression`, ...) | you fumble symbolic math and floating point. SymPy does not |
+| reason over relations, reachability, conflicting rules | `chiasmus_solve` (Prolog) | transitive closure and logic done correctly |
+| schedule, allocate, pack, assign, optimize | `mcp-solver` (`add_item` then `solve_model`) | the optimum under constraints, not a greedy guess |
 | find the input that breaks a Python function | `crosshair check` (CLI) | symbolic execution walks every path and hands you the break |
 | confirm two functions agree everywhere | `crosshair diffbehavior` (CLI) | a disagreeing input, or silence |
 | check types, lint, catch bug classes | `pyright`, `ruff` (CLI) | cheap and fast. run it every time |

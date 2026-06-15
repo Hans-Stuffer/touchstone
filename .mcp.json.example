@@ -13,11 +13,11 @@
     "sympy": {
       "command": "uv",
       "args": ["run", "--with", "mcp[cli]", "--with", "sympy", "--with", "pydantic",
-               "mcp", "run", "/home/USER/.rigor/servers/sympy-mcp/server.py"]
+               "mcp", "run", "/home/USER/.touchstone/servers/sympy-mcp/server.py"]
     },
     "mcp-solver": {
       "command": "uv",
-      "args": ["--directory", "/home/USER/.rigor/servers/mcp-solver", "run", "mcp-solver-mzn"]
+      "args": ["--directory", "/home/USER/.touchstone/servers/mcp-solver", "run", "mcp-solver-mzn"]
     }
   }
 }
