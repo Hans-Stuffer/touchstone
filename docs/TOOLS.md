@@ -15,7 +15,7 @@ Guarantee: a Z3 UNSAT result is a genuine proof over the declared theory (ints, 
 
 ## SymPy (MCP server: sympy)
 
-About forty tools wrapping SymPy for exact computer algebra: `solve_algebraically`, `solve_linear_system`, `solve_nonlinear_system`, `dsolve_ode`, `integrate_expression`, `differentiate_expression`, `simplify_expression`, `substitute_expression`, matrices, vector calculus, units. Build expressions with `introduce_expression` first, then operate on the handle. Results are exact rationals, radicals, and symbolic forms.
+About forty tools wrapping SymPy for exact computer algebra: `solve_algebraically`, `solve_linear_system`, `solve_nonlinear_system`, `dsolve_ode`, `integrate_expression`, `differentiate_expression`, `simplify_expression`, `substitute_expression`, matrices, vector calculus, units. It is stateful. Declare each variable with `intro` (and assumptions like `real`) first, then `introduce_expression`, then operate on the returned handle. Introduce the expression before the variable and `solve_algebraically` silently returns the empty set because the symbols do not match. Results are exact rationals, radicals, and symbolic forms.
 
 Use it whenever you would otherwise compute math in your head or in float. To check an identity, simplify `lhs - rhs` and confirm it is zero.
 

@@ -27,6 +27,8 @@ Match the sub-problem, pick the tool:
 | catch injection, taint, security smells | `semgrep_scan` | thousands of deterministic rules |
 | understand call structure, dead code, blast radius | `chiasmus_graph` | a real graph, not grep and hope |
 
+> SymPy is stateful. Declare each variable with `intro` (and its assumptions, like `real`) **before** you introduce an expression that uses it, then solve. Skip that and `solve_algebraically` silently returns the empty set, because the expression's symbol is a different object from the one you solved for.
+
 ## The two moves
 
 **Translate then solve.** Turn the fuzzy thing into the engine's language, let it compute the exact answer, read it back in plain words. This is math, constraints, and optimization.
